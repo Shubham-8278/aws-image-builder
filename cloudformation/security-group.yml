@@ -1,0 +1,39 @@
+Description: AWS CloudFormation template for Amazon EC2 Image Builder pipeline with a web server component
+Parameters:
+  vpcId:
+    Type: AWS::EC2::VPC::Id
+
+  owner:
+    Type: String
+    Default: "Shubham"
+  ownerOrg:
+    Type: String
+    Default: "TTN"
+  environment:
+    Type: String
+    Default: "POC"
+    AllowedValues:
+      - POC
+      - dev
+      - prod
+
+Resources:
+  builderSg0:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for ec2 image builder
+      VpcId: !Ref vpcId
+      Tags:
+        - Key: owner
+          Value: !Ref owner
+        - Key: managed by
+          Value: !Ref ownerOrg
+        - Key: environment
+          Value: !Ref environment
+
+Outputs:
+  builderSg0:
+    Value: !Ref builderSg0
+    Export: 
+      Name: !Sub '${AWS::StackName}-builder'
+

@@ -1,0 +1,55 @@
+Description: AWS CloudFormation template for Amazon EC2 Image Builder pipeline with a web server component
+Parameters:
+  owner:
+    Type: String
+    Default: 'Shubham'
+  ownerOrg:
+    Type: String
+    Default: 'TTN'
+  environment:
+    Type: String
+    Default: 'POC'
+    AllowedValues:
+      - POC
+      - dev
+      - prod
+
+Resources:
+  builderProfile0:
+    Type: AWS::IAM::InstanceProfile
+    DependsOn:
+      - builderRole0
+    Properties:
+      Roles: 
+        - !Ref builderRole0
+
+  builderRole0:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilder
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+      Tags:
+        - Key: owner
+          Value: !Ref owner
+        - Key: managed by
+          Value: !Ref ownerOrg
+        - Key: environment
+          Value: !Ref environment
+      
+Outputs:
+  InstanceProfile:
+    Value: !Ref builderProfile0
+    Export: 
+      Name: !Sub '${AWS::StackName}-profile'

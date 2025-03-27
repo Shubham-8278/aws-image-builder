@@ -1,0 +1,90 @@
+Description: AWS CloudFormation template for Amazon EC2 Image Builder pipeline with a web server component
+Parameters:
+  iamStack:
+    Type: String
+    Default: test
+  ParentImage:
+    Type: String
+    Default: ami-071226ecf16aa7d96
+  ComponentArn:
+    Type: String
+    Default: arn:aws:imagebuilder:us-east-1:148761653007:component/mycustomcomponent/1.0.1/1
+  sgStack:
+    Type: String
+    Default: builder-sg
+  version:
+    Type: String
+    Default: 1.0.3
+  owner:
+    Type: String
+    Default: "Shubham"
+  ownerOrg:
+    Type: String
+    Default: "TTN"
+  environment:
+    Type: String
+    Default: "POC"
+    AllowedValues:
+      - POC
+      - dev
+      - prod
+
+Resources:
+  infra0:
+    Type: AWS::ImageBuilder::InfrastructureConfiguration
+    Properties:
+      InstanceProfileName: !ImportValue
+        "Fn::Sub": "${iamStack}-profile"
+      Description: "Creating infrastructure for the purpose of making AMI"
+      InstanceTypes:
+        - "t2.micro"
+      Name: !Sub "${AWS::StackName}-instance"
+      SecurityGroupIds:
+        - !ImportValue
+          "Fn::Sub": "${sgStack}-builder"
+      SubnetId: "subnet-085b3bdec84a081f2"
+      TerminateInstanceOnFailure: true
+      Tags:
+        owner: !Ref owner
+        managed_by: !Ref ownerOrg
+        environment: !Ref environment
+
+  component0:
+    Type: AWS::ImageBuilder::Component
+    Properties:
+      Name: "MyCustomComponent"
+      Platform: "Linux"
+      Version: !Ref version
+      Description: "Executes custom shell scripts during image build"
+      ChangeDescription: "Initial version"
+      Uri: "s3://awsbucketforttn/imagebuilder/scripts/component_data.yml"
+      Tags:
+        Project: "ImageBuilder"
+        Environment: "Dev"
+
+  recipe0:
+    DependsOn: component0
+    Type: "AWS::ImageBuilder::ImageRecipe"
+    Properties:
+      Name: "poc-recipe"
+      Version: !Ref version
+      ParentImage: !Ref ParentImage
+      Description: "description"
+      Components:
+        - ComponentArn: !Ref ComponentArn
+
+  distribution0:
+    Type: 'AWS::ImageBuilder::DistributionConfiguration'
+    Properties:
+      Name: 'ImageBuilderDistribution'
+      Description: 'distribution for multi account sharing'
+      Distributions:
+        - Region: 'us-east-1'
+          AmiDistributionConfiguration:
+            Name: 'ImageBuilderPOC {{ imagebuilder:buildDate }}'
+            Description: 'Set launch permissions and specify a license configuration for destination Region.'
+            LaunchPermissionConfiguration:
+              UserIds:
+                - !Sub ${AWS::AccountId}
+            TargetAccountIds:
+              - '423623871737'

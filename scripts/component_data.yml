@@ -1,0 +1,70 @@
+# name: MyCustomComponent
+# description: Executes custom shell scripts during image build
+# schemaVersion: 1.0
+# phases:
+#   build:
+#     steps:
+#       - name: RunMainScript
+#         action: ExecuteBash
+#         inputs:
+#           commands:
+#             - curl -O s3://awsbucketforttn/imagebuilder/scripts/main.sh
+#             - chmod +x main.sh
+#             - ./main.sh
+#   validate:
+#     steps:
+#       - name: RunValidationScript
+#         action: ExecuteBash
+#         inputs:
+#           commands:
+#             - curl -O s3://awsbucketforttn/imagebuilder/scripts/validate.sh
+#             - chmod +x validate.sh
+#             - ./validate.sh
+#   test:
+#     steps:
+#       - name: RunTestScript
+#         action: ExecuteBash
+#         inputs:
+#           commands:
+#             - curl -O s3://awsbucketforttn/imagebuilder/scripts/test.sh
+#             - chmod +x test.sh
+#             - ./test.sh
+name: HelloWorldBuildDocument
+description: This is hello world build document.
+schemaVersion: 1.0
+
+phases:
+  - name: build
+    steps:
+      - name: awscliinstall
+        action: ExecuteBash
+        inputs:
+          commands:
+             - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+             - sudo apt install unzip
+             - unzip awscliv2.zip
+             - sudo ./aws/install
+      - name: HelloWorldStep
+        action: ExecuteBash
+        inputs:
+          commands:
+             - mkdir -p /tmp/scripts
+             - aws s3 cp s3://awsbucketforttn/imagebuilder/scripts/ /tmp/scripts/ --recursive --region us-east-1
+             - echo "main yaha hun"
+             - ls -lar
+             - bash /tmp/scripts/main.sh
+  # - name: validate
+  #   steps:
+  #     - name: HelloWorldStep
+  #       action: ExecuteBash
+  #       inputs:
+  #         commands:
+  #           - echo "Hello World! Validate."
+
+  # - name: test
+  #   steps:
+  #     - name: HelloWorldStep
+  #       action: ExecuteBash
+  #       inputs:
+  #         commands:
+  #           - echo "Hello World! Test."
