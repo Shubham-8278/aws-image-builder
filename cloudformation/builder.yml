@@ -1,5 +1,7 @@
 Description: AWS CloudFormation template for Amazon EC2 Image Builder pipeline with a web server component
 Parameters:
+  ImageRecipeArn:
+    Type: String
   iamStack:
     Type: String
     Default: test
@@ -8,13 +10,13 @@ Parameters:
     Default: ami-071226ecf16aa7d96
   ComponentArn:
     Type: String
-    Default: arn:aws:imagebuilder:us-east-1:148761653007:component/mycustomcomponent/1.0.1/1
+    Default: arn:aws:imagebuilder:us-east-1:148761653007:component/mycustomcomponent/1.0.6/1
   sgStack:
     Type: String
     Default: builder-sg
   version:
     Type: String
-    Default: 1.0.3
+    Default: 1.0.6
   owner:
     Type: String
     Default: "Shubham"
@@ -49,6 +51,47 @@ Resources:
         managed_by: !Ref ownerOrg
         environment: !Ref environment
 
+  # component0:
+  #   Type: AWS::ImageBuilder::Component
+  #   Properties:
+  #     Name: "MyCustomComponent"
+  #     Platform: "Linux"
+  #     Version: !Ref version
+  #     Description: "Executes custom shell scripts during image build"
+  #     ChangeDescription: "Initial version"
+  #     # Uri: "s3://awsbucketforttn/imagebuilder/scripts/component_data.yml"
+  #     Data: !Sub |
+  #       name: HelloWorldBuildDocument
+  #       description: This is hello world build document.
+  #       schemaVersion: 1.0
+
+  #       phases:
+  #         - name: build
+  #           steps:
+  #             - name: awscliinstall
+  #               action: ExecuteBash
+  #               inputs:
+  #                 commands:
+  #                   - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  #                   - sudo apt install unzip -y
+  #                   - unzip awscliv2.zip
+  #                   - sudo ./aws/install
+  #             - name: HelloWorldStep
+  #               action: ExecuteBash
+  #               inputs:
+  #                 commands:
+  #                   - mkdir -p /tmp/scripts
+  #                   - echo Owner: ${owner}
+  #                   - echo Environment:
+  #                   - aws s3 cp s3://awsbucketforttn/imagebuilder/scripts/ /tmp/scripts/ --recursive --region us-east-1
+  #                   - echo $iamStack
+  #                   - ls -lar
+  #                   - bash /tmp/scripts/main.sh
+
+  #     Tags:
+  #       Project: "ImageBuilder"
+  #       Environment: "Dev"
+
   component0:
     Type: AWS::ImageBuilder::Component
     Properties:
@@ -57,10 +100,37 @@ Resources:
       Version: !Ref version
       Description: "Executes custom shell scripts during image build"
       ChangeDescription: "Initial version"
-      Uri: "s3://awsbucketforttn/imagebuilder/scripts/component_data.yml"
+      Data: !Sub |
+        name: HelloWorldBuildDocument
+        description: This is hello world build document.
+        schemaVersion: 1.0
+        phases:
+          - name: build
+            steps:
+              - name: awscliinstall
+                action: ExecuteBash
+                inputs:
+                  commands:
+                    - "curl \"https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip\" -o \"awscliv2.zip\""
+                    - "sudo apt install unzip -y"
+                    - "unzip awscliv2.zip"
+                    - "sudo ./aws/install"
+              - name: HelloWorldStep
+                action: ExecuteBash
+                inputs:
+                  commands:
+                    - "mkdir -p /tmp/scripts"
+                    - "echo Owner: ${owner}"
+                    - "echo Environment: ${environment}"
+                    - "aws s3 cp s3://awsbucketforttn/imagebuilder/scripts/ /tmp/scripts/ --recursive --region us-east-1"
+                    - "echo ${iamStack}"
+                    - "ls -lar"
+                    - "bash /tmp/scripts/main.sh"
       Tags:
         Project: "ImageBuilder"
         Environment: "Dev"
+
+
 
   recipe0:
     DependsOn: component0
@@ -74,17 +144,27 @@ Resources:
         - ComponentArn: !Ref ComponentArn
 
   distribution0:
-    Type: 'AWS::ImageBuilder::DistributionConfiguration'
+    Type: "AWS::ImageBuilder::DistributionConfiguration"
     Properties:
-      Name: 'ImageBuilderDistribution'
-      Description: 'distribution for multi account sharing'
+      Name: "ImageBuilderDistributionv3"
+      Description: "distribution for multi account sharing"
       Distributions:
-        - Region: 'us-east-1'
+        - Region: "us-east-1"
           AmiDistributionConfiguration:
-            Name: 'ImageBuilderPOC {{ imagebuilder:buildDate }}'
-            Description: 'Set launch permissions and specify a license configuration for destination Region.'
+            Name: "ImageBuilderPOC {{ imagebuilder:buildDate }}"
+            Description: "Set launch permissions and specify a license configuration for destination Region."
             LaunchPermissionConfiguration:
               UserIds:
                 - !Sub ${AWS::AccountId}
             TargetAccountIds:
-              - '423623871737'
+              - "423623871737"
+
+  pipeline0:
+    Type: "AWS::ImageBuilder::ImagePipeline"
+    DependsOn: recipe0
+    Properties:
+      Name: "poc-pipeline-cfmm"
+      Description: "this is an pipleine for the image builder poc"
+      ImageRecipeArn: !GetAtt recipe0.Arn
+      InfrastructureConfigurationArn: !GetAtt infra0.Arn
+      DistributionConfigurationArn: !GetAtt distribution0.Arn
