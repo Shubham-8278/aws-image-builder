@@ -192,9 +192,6 @@ Outputs:
 
 ---
 
-
-Absolutely! Here's a **more detailed version** of the **Pros and Cons** section for **EC2 Image Builder**, incorporating aspects like **timings**, **workflow automation**, **approval steps**, and **Packer comparison**. This is markdown-friendly and ready to drop into your `README.md`:
-
 ---
 
 ## ✅ Pros of EC2 Image Builder (Detailed)
