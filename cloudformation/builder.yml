@@ -51,47 +51,6 @@ Resources:
         managed_by: !Ref ownerOrg
         environment: !Ref environment
 
-  # component0:
-  #   Type: AWS::ImageBuilder::Component
-  #   Properties:
-  #     Name: "MyCustomComponent"
-  #     Platform: "Linux"
-  #     Version: !Ref version
-  #     Description: "Executes custom shell scripts during image build"
-  #     ChangeDescription: "Initial version"
-  #     # Uri: "s3://awsbucketforttn/imagebuilder/scripts/component_data.yml"
-  #     Data: !Sub |
-  #       name: HelloWorldBuildDocument
-  #       description: This is hello world build document.
-  #       schemaVersion: 1.0
-
-  #       phases:
-  #         - name: build
-  #           steps:
-  #             - name: awscliinstall
-  #               action: ExecuteBash
-  #               inputs:
-  #                 commands:
-  #                   - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-  #                   - sudo apt install unzip -y
-  #                   - unzip awscliv2.zip
-  #                   - sudo ./aws/install
-  #             - name: HelloWorldStep
-  #               action: ExecuteBash
-  #               inputs:
-  #                 commands:
-  #                   - mkdir -p /tmp/scripts
-  #                   - echo Owner: ${owner}
-  #                   - echo Environment:
-  #                   - aws s3 cp s3://awsbucketforttn/imagebuilder/scripts/ /tmp/scripts/ --recursive --region us-east-1
-  #                   - echo $iamStack
-  #                   - ls -lar
-  #                   - bash /tmp/scripts/main.sh
-
-  #     Tags:
-  #       Project: "ImageBuilder"
-  #       Environment: "Dev"
-
   component0:
     Type: AWS::ImageBuilder::Component
     Properties:
